@@ -56,7 +56,7 @@ Puppet::Type.type(:grafana_folder).provide(:grafana, parent: Puppet::Provider::G
 
   def folders
     response = send_request('GET', format('%s/folders', resource[:grafana_api_path]))
-    if response.code != 200
+    if response.code != '200'
       raise format('Fail to retrieve the folders (HTTP response: %s/%s)', response.code, response.body)
     end
 
@@ -93,12 +93,11 @@ Puppet::Type.type(:grafana_folder).provide(:grafana, parent: Puppet::Provider::G
       raise format('Failed to switch to org %s (HTTP response: %s/%s)', fetch_organization[:id], response.code, response.body)
     end
 
-    # if dashboard exists, update object based on uid
+    # if folder exists, update object based on uid
     # else, create object
-    if @dashboard.nil?
+    if @folder.nil?
       data = {
-        folder: folder.merge('title' => resource[:title],
-                             'uid' => @dashboard ? @dashboard['uid'] : nil)
+        'title': resource[:title]
       }
 
       response = send_request('POST', format('%s/folders', resource[:grafana_api_path]), data)
@@ -107,11 +106,11 @@ Puppet::Type.type(:grafana_folder).provide(:grafana, parent: Puppet::Provider::G
     else 
       data = {
         folder: folder.merge('title' => resource[:title],
-                             'uid' => @dashboard['uid']),
+                             'uid' => @folder['uid']),
         overwrite: !@folder.nil?
       }
 
-      response = send_request('POST', format('%s/folders/%s', resource[:grafana_api_path], @dashboard['uid']), data)
+      response = send_request('POST', format('%s/folders/%s', resource[:grafana_api_path], @folder['uid']), data)
       return unless (response.code != '200') && (response.code != '412')
       raise format('Failed to update folder %s (HTTP response: %s/%s)', resource[:title], response.code, response.body)
     end
@@ -122,11 +121,15 @@ Puppet::Type.type(:grafana_folder).provide(:grafana, parent: Puppet::Provider::G
   end 
 
   def create
-    save_dashboard(resource)
+    save_folder(resource)
   end
 
   def destroy
-    response = send_request('DELETE', format('%s/folders/%s', resource[:grafana_api_path], resource[:uid]))
+    if @folder.nil?
+      find_folder
+    end
+
+    response = send_request('DELETE', format('%s/folders/%s', resource[:grafana_api_path], @folder['uid']))
 
     return unless response.code != '200'
     raise Puppet::Error, format('Failed to delete folder %s (HTTP response: %s/%s)', resource[:title], response.code, response.body)
