@@ -78,7 +78,7 @@ Puppet::Type.type(:grafana_folder).provide(:grafana, parent: Puppet::Provider::G
     begin
       folders = JSON.parse(response.body)
       folders.each do |folder|
-        @folder = folder ? folder['title'] == resource[:title] : next
+        @folder = folder if folder['title'] == resource[:title]
       end
     rescue JSON::ParserError
       raise format('Fail to parse folder %s: %s', resource[:title], response.body)
