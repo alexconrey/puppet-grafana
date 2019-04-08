@@ -4,7 +4,7 @@ describe 'grafana_folder' do
   context 'create folder resource' do
     it 'runs successfully' do
       pp = <<-EOS
-      class { 'grafana': 
+      class { 'grafana':
         cfg => {
           security => {
             admin_user     => 'admin',
@@ -13,7 +13,7 @@ describe 'grafana_folder' do
         }
       }
 
-      grafana_folder { 'example-folder': 
+      grafana_folder { 'example-folder':
         ensure           => present,
         grafana_url      => 'http://localhost:3000',
         grafana_user     => 'admin',
@@ -34,7 +34,7 @@ describe 'grafana_folder' do
   context 'destroy folder resource' do
     it 'runs successfully' do
       pp = <<-EOS
-      class { 'grafana': 
+      class { 'grafana':
         cfg => {
           security => {
             admin_user     => 'admin',
@@ -43,7 +43,7 @@ describe 'grafana_folder' do
         }
       }
 
-      grafana_folder { 'example-folder': 
+      grafana_folder { 'example-folder':
         ensure           => absent,
         grafana_url      => 'http://localhost:3000',
         grafana_user     => 'admin',
