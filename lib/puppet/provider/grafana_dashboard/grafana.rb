@@ -60,24 +60,20 @@ Puppet::Type.type(:grafana_dashboard).provide(:grafana, parent: Puppet::Provider
   end
 
   def folders
-    unless @folders
-      response = send_request('GET', format('%s/folders', resource[:grafana_api_path]))
-      if response.code != '200'
-        raise format('Fail to retrieve the folders (HTTP response: %s/%s)', response.code, response.body)
-      end
+    response = send_request('GET', format('%s/folders', resource[:grafana_api_path]))
+    if response.code != '200'
+      raise format('Fail to retrieve the folders (HTTP response: %s/%s)', response.code, response.body)
+    end
 
-      begin
-        @folders = JSON.parse(response.body)
-      rescue JSON::ParserError
-        raise format('Fail to parse folders (HTTP response: %s/%s)', response.code, response.body)
-      end
+    begin
+      @folders = JSON.parse(response.body)
+    rescue JSON::ParserError
+      raise format('Fail to parse folders (HTTP response: %s/%s)', response.code, response.body)
     end
   end
 
   def find_folder
-    unless @folders
-      folders
-    end
+    folders unless @folders
 
     begin
       @folders.each do |folder|
