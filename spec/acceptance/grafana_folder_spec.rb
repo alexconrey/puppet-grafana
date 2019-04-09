@@ -92,7 +92,6 @@ describe 'grafana_folder' do
     it 'has no example-folder' do
       shell('curl --user admin:admin http://localhost:3000/api/folders') do |f|
         expect(f.stdout).not_to match(%r{example-folder})
-        expect(f.stdout).not_to match(%r{nomatch-folder})
       end
     end
 
