@@ -79,6 +79,7 @@ Puppet::Type.type(:grafana_dashboard).provide(:grafana, parent: Puppet::Provider
       @folders.each do |folder|
         @folder = folder if folder['title'] == resource[:folder]
       end
+      raise format('Folder not found: %s', resource[:folder]) unless @folder['title'] == resource[:folder]
     rescue JSON::ParserError
       raise format('Fail to parse folder %s: %s', resource[:folder], response.body)
     end
