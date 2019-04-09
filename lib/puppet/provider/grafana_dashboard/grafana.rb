@@ -59,6 +59,37 @@ Puppet::Type.type(:grafana_dashboard).provide(:grafana, parent: Puppet::Provider
     @fetch_organization
   end
 
+  def folders
+    response = send_request('GET', format('%s/folders', resource[:grafana_api_path]))
+    if response.code != '200'
+      raise format('Fail to retrieve the folders (HTTP response: %s/%s)', response.code, response.body)
+    end
+
+    begin
+      JSON.parse(response.body)
+    rescue JSON::ParserError
+      raise format('Fail to parse folders (HTTP response: %s/%s)', response.code, response.body)
+    end
+  end
+
+  def find_folder
+    return unless folders.find { |x| x['title'] == resource[:folder] }
+
+    response = send_request('GET', format('%s/dashboards/db/%s', resource[:grafana_api_path], slug)
+    if response.code != '200'
+      raise format('Fail to retrieve folders (HTTP response: %s/%s)', response.code, response.body)
+    end
+
+    begin
+      folders = JSON.parse(response.body)
+      folders.each do |folder|
+        @folder = folder if folder['title'] == resource[:folder]
+      end
+    rescue JSON::ParserError
+      raise format('Fail to parse folder %s: %s', resource[:folder], response.body)
+    end
+  end
+
   # Return the list of dashboards
   def dashboards
     response = send_request('GET', format('%s/search', resource[:grafana_api_path]), nil, q: '', starred: false)
@@ -91,6 +122,8 @@ Puppet::Type.type(:grafana_dashboard).provide(:grafana, parent: Puppet::Provider
   end
 
   def save_dashboard(dashboard)
+    find_folder if resource[:folder]
+
     # change organizations
     response = send_request 'POST', format('%s/user/using/%s', resource[:grafana_api_path], fetch_organization[:id])
     unless response.code == '200'
@@ -100,7 +133,8 @@ Puppet::Type.type(:grafana_dashboard).provide(:grafana, parent: Puppet::Provider
     data = {
       dashboard: dashboard.merge('title' => resource[:title],
                                  'id' => @dashboard ? @dashboard['id'] : nil,
-                                 'version' => @dashboard ? @dashboard['version'] + 1 : 0),
+                                 'version' => @dashboard ? @dashboard['version'] + 1 : 0,
+                                 'folderId' => @folder ? @folder['id'] : nil),
       overwrite: !@dashboard.nil?
     }
 
