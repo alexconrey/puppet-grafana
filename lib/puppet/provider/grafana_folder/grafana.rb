@@ -122,6 +122,13 @@ Puppet::Type.type(:grafana_folder).provide(:grafana, parent: Puppet::Provider::G
   end
 
   def exists?
-    find_folder
+    folders unless @folders
+
+    @folders.each do |folder|
+      if folder['title'] == resource[:title]
+        return true
+      end
+    end
+    return false
   end
 end
